@@ -1,105 +1,128 @@
-Discogs Lakehouse (Local) — Run-based, Reproducible Pipeline
+Discogs Lakehouse (Local)
 
-This project implements a local-first Discogs lakehouse with run-based versioning, immutable snapshots, and atomic promotion of validated data.
+Run-based, Reproducible Data Platform
 
-The system is designed to behave like a real production data platform, while remaining fully reproducible on a laptop.
+This project implements a local-first Discogs lakehouse built around run-based versioning, immutable snapshots, and atomic data promotion.
 
-================================================================================
+The system is designed to behave like a real production-grade data platform, while remaining fully reproducible on a single machine.
 
+It prioritizes correctness, auditability, and safety over convenience.
+
+===================================================
+
+Overview
+
+The platform follows three fundamental rules:
+	•	Data is immutable
+	•	Every pipeline execution is versioned
+	•	Only validated data can be published
+
+Instead of overwriting datasets, every run produces a complete snapshot that can be re-queried at any time.
+
+Publishing is performed by switching a single symbolic pointer.
+
+This mirrors how modern lakehouse systems operate in production.
+
+=====================================================
 
 Project structure
 
-The architecture is intentionally split into two repositories, each with a clear responsibility.
+The architecture is intentionally split into two independent repositories, each with a clearly defined responsibility.
 
 
 1) Infrastructure layer
 
 Trino + Hive Metastore + external table bootstrap
 
-Repo:
+Repository:
 👉 https://github.com/PabloPablo666/trino-hive-setup
 
-Responsibilities:
+Responsibilities
 	•	Trino compute engine (stateless)
 	•	Hive Metastore backed by Postgres
 	•	External table registration
 	•	Stable SQL contract for consumers
 
-This layer can be destroyed and recreated at any time without touching the data.
+This layer owns query execution only.
+
+It does not own data.
+
+It can be destroyed and recreated at any time without affecting stored datasets.
 
 
 2) Pipeline & validation layer
 
-Discogs ingestion, transformations, tests, orchestration
+Discogs ingestion, transformation, validation, orchestration
 
-Repo:
+Repository:
 👉 https://github.com/PabloPablo666/discogs_tools_refactor
 
-Responsibilities:
+Responsibilities
 	•	Download Discogs dumps
 	•	Stream-parse large XML files
 	•	Write typed Parquet datasets
 	•	Build analytical warehouse tables
-	•	Run validation tests
-	•	Produce sanity reports
+	•	Run validation checks
+	•	Generate audit reports
 	•	Promote validated data atomically
 
-This repo owns the data lifecycle.
+This repository owns the entire data lifecycle.
 
-================================================================================
-
+=============================================================
 
 Core design principles
 
-
 ✅ Run-based architecture
 
-Every pipeline execution creates an immutable snapshot:
+Every pipeline execution produces an immutable snapshot:
+
 hive-data/
 └── _runs/
-    └── YYYYMMDD_HHMMSS/
+    └── <run_id>/
 
-Each run contains:
-•	base typed datasets
-•	derived warehouse datasets
-•	reports and logs
+		Each run contains:
+			•	canonical typed datasets
+			•	derived warehouse datasets
+			•	validation reports
+			•	execution metadata
 
-Nothing is overwritten.
-Every run is fully reproducible.
+		Nothing is overwritten.
+		Every run remains queryable forever.
 
 
 ✅ Active pointer (publish layer)
 
-Consumers never read from _runs.
+Consumers never read directly from _runs.
 
-Instead, a single symbolic link is used:
+Instead, a single symbolic link defines the published dataset:
+hive-data/active -> _runs/2026-01__20260117_192144
 
-hive-data/active -> _runs/20260117_192144
-
-Promotion is performed by switching this pointer atomically.
+Publishing consists of switching this pointer atomically.
 
 Benefits:
-	•	zero-downtime data publishing
+	•	zero-downtime publishing
 	•	instant rollback
-	•	stable table locations in Trino
+	•	stable table paths in Trino
+	•	no partial states ever visible
 
 
 ✅ Immutable data, mutable pointer
 
-Data is immutable.
+Data never changes after creation.
+
 Only the pointer moves.
 
 This is the same principle used by:
 	•	data warehouses
 	•	lakehouse systems
-	•	versioned datasets in production
+	•	versioned datasets in production environments
 
-================================================================================
-
+===================================================
 
 Data layout
 
 Physical storage (run snapshot)
+
 hive-data/
 └── _runs/
     └── <run_id>/
@@ -109,18 +132,22 @@ hive-data/
         ├── masters_v1_typed/
         ├── releases_v6/
         ├── labels_v10/
-        ├── collection/
-        ├── warehouse_discogs/
+        ├── release_artists_v1/
+        ├── release_label_xref_v1/
+        ├── label_release_counts_v1/
+        ├── genre_style_xref/
         └── _reports/
 
-Each directory contains Parquet files only.
+All datasets are stored as Parquet only.
 
-================================================================================
+No mutable formats.
+No partial overwrites.
 
+==================================================
 
 Logical access (Trino)
 
-Trino external tables always point to:       
+Trino external tables always point to:
 file:/data/hive-data/active/...
 
 As a result:
@@ -128,98 +155,102 @@ As a result:
 	•	dashboards never change
 	•	notebooks never change
 
-Only the underlying run changes after promotion.
+Only the active pointer changes after promotion.
 
-================================================================================
+This decouples compute from storage completely.
 
+==================================================
 
-Pipeline stages
+Pipeline lifecycle
 
-The pipeline is orchestrated with Digdag and follows a strict lifecycle.
+The ingestion pipeline is orchestrated using Digdag and follows a strict execution model.
+
 
 1) Preflight
 	•	validate environment variables
 	•	verify dump availability
-	•	compute run_id
+	•	compute deterministic run_id
+
+The run ID is generated once and propagated to all tasks.
 
 
 2) Download (optional)
-	•	download Discogs dumps by month
-	•	idempotent (skips existing files)
+	•	downloads Discogs dumps by month
+	•	idempotent
+	•	skips existing files safely
 
 
 3) Ingest
-	•	streaming XML parsing (no full-file loading)
-	•	typed canonical datasets written as Parquet
-	•	one dataset per entity
+	•	streaming XML parsing
+	•	no full-file loading
+	•	constant memory usage
 
-Examples:
-	•	artists_v1_typed
-	•	labels_v10
-	•	masters_v1_typed
-	•	releases_v6
+Typed canonical datasets are written:
+	•	artists
+	•	labels
+	•	masters
+	•	releases
+	•	relationships
+
+Each entity is processed independently.
 
 
 4) Build warehouse
 
 Derived analytical datasets are generated:
-	•	artist_name_map_v1
-	•	release_artists_v1
-	•	release_label_xref_v1
-	•	label_release_counts_v1
-	•	genre/style cross-reference tables
+	•	artist name mappings
+	•	release–artist relationships
+	•	release–label relationships
+	•	label release aggregations
+	•	genre and style normalization tables
 
 These tables are optimized for analytics, not raw storage.
 
 
 5) Run-level parquet sanity checks
 
-Executed on the current run directory before promotion.
-
-Examples:
+Before promotion, filesystem-level validations are executed:
 	•	required datasets exist
-	•	directories not empty
-	•	structural sanity
+	•	directories are not empty
+	•	basic structural integrity
 
-If these fail, the run is aborted.
+If any check fails, the run is aborted.
+
+Nothing is published.
 
 
 6) Promote
 
-If all checks pass:
-
+If all validations pass:
 active -> _runs/<run_id>
 
-The previous active pointer is backed up automatically:
-
+The previous pointer is preserved automatically:
 active__prev_<timestamp>
+
 Rollback is a single filesystem operation.
 
 
 7) Post-promotion Trino sanity report
 
-After promotion, Trino is used to validate real query behavior.
-
-Checks include:
+After promotion, Trino-based validations are executed on the active dataset:
 	•	row counts
 	•	null ratios
 	•	orphan foreign keys
 	•	duplicate keys
 	•	cross-table integrity
 
-Results are exported as CSV.
+Results are exported as CSV:
 _runs/<run_id>/_reports/trino_sanity_active_<timestamp>.csv
 
 This creates a permanent audit trail.
 
-================================================================================
-
+=============================================================
 
 Why this design matters
 
 ✔ Reproducibility
 
-Any historical run can be re-queried exactly as it was produced.
+Any historical run can be queried exactly as it was produced.
 
 ✔ Safe experimentation
 
@@ -227,38 +258,37 @@ New dumps can be ingested without touching production data.
 
 ✔ Atomic publishing
 
-Consumers see either old data or new data, never partial states.
+Consumers see either old data or new data. Never partial states.
 
 ✔ Rollback
 
 One symlink switch.
 
-✔ Auditable
+✔ Auditability
 
-Every run produces structured validation reports.
+Every run produces structured, timestamped validation reports.
 
 ✔ Infrastructure independence
 
-Trino and Hive can be rebuilt freely.
+Trino and Hive can be rebuilt freely without data loss.
 
-================================================================================
+==========================================================
 
 What this project is not
 	•	not a toy ETL
-	•	not a one-off parser
 	•	not overwrite-based ingestion
+	•	not a one-off XML parser
 	•	not “just some Parquet files”
 
 It behaves like a real lakehouse pipeline.
 
-================================================================================
-
+===========================================================
 
 Legal note
 
 Discogs data is subject to Discogs licensing terms.
 
 This project:
-	•	does not ship Discogs datasets
-	•	does not redistribute dumps
-	•	focuses purely on infrastructure and data engineering patterns
+	•	does not distribute Discogs datasets
+	•	does not ship dumps
+	•	focuses exclusively on data engineering architecture and patterns
