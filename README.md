@@ -96,6 +96,7 @@ Every run remains queryable forever.
 Consumers never read directly from _runs.
 
 Instead, a single symbolic link defines the published dataset:
+
 hive-data/active -> _runs/2026-01__20260117_192144
 
 Publishing consists of switching this pointer atomically.
