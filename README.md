@@ -1,4 +1,4 @@
-Discogs Lakehouse (Local)
+# Discogs Lakehouse (Local)
 
 Run-based, Reproducible Data Platform
 
@@ -10,7 +10,7 @@ It prioritizes correctness, auditability, and safety over convenience.
 
 ===================================================
 
-Overview
+## Overview
 
 The platform follows three fundamental rules:
 	•	Data is immutable
@@ -25,12 +25,12 @@ This mirrors how modern lakehouse systems operate in production.
 
 =====================================================
 
-Project structure
+## Project structure
 
 The architecture is intentionally split into two independent repositories, each with a clearly defined responsibility.
 
 
-1) Infrastructure layer
+### 1) Infrastructure layer
 
 Trino + Hive Metastore + external table bootstrap
 
@@ -50,7 +50,7 @@ It does not own data.
 It can be destroyed and recreated at any time without affecting stored datasets.
 
 
-2) Pipeline & validation layer
+### 2) Pipeline & validation layer
 
 Discogs ingestion, transformation, validation, orchestration
 
@@ -70,7 +70,7 @@ This repository owns the entire data lifecycle.
 
 =============================================================
 
-Core design principles
+## Core design principles
 
 ✅ Run-based architecture
 
@@ -80,14 +80,14 @@ hive-data/
 └── _runs/
     └── <run_id>/
 
-		Each run contains:
-			•	canonical typed datasets
-			•	derived warehouse datasets
-			•	validation reports
-			•	execution metadata
+Each run contains:
+	•	canonical typed datasets
+	•	derived warehouse datasets
+	•	validation reports
+	•	execution metadata
 
-		Nothing is overwritten.
-		Every run remains queryable forever.
+Nothing is overwritten.
+Every run remains queryable forever.
 
 
 ✅ Active pointer (publish layer)
@@ -119,7 +119,7 @@ This is the same principle used by:
 
 ===================================================
 
-Data layout
+## Data layout
 
 Physical storage (run snapshot)
 
@@ -145,7 +145,7 @@ No partial overwrites.
 
 ==================================================
 
-Logical access (Trino)
+## Logical access (Trino)
 
 Trino external tables always point to:
 file:/data/hive-data/active/...
@@ -161,12 +161,12 @@ This decouples compute from storage completely.
 
 ==================================================
 
-Pipeline lifecycle
+## Pipeline lifecycle
 
 The ingestion pipeline is orchestrated using Digdag and follows a strict execution model.
 
 
-1) Preflight
+### 1) Preflight
 	•	validate environment variables
 	•	verify dump availability
 	•	compute deterministic run_id
@@ -174,13 +174,13 @@ The ingestion pipeline is orchestrated using Digdag and follows a strict executi
 The run ID is generated once and propagated to all tasks.
 
 
-2) Download (optional)
+### 2) Download (optional)
 	•	downloads Discogs dumps by month
 	•	idempotent
 	•	skips existing files safely
 
 
-3) Ingest
+### 3) Ingest
 	•	streaming XML parsing
 	•	no full-file loading
 	•	constant memory usage
@@ -195,7 +195,7 @@ Typed canonical datasets are written:
 Each entity is processed independently.
 
 
-4) Build warehouse
+### 4) Build warehouse
 
 Derived analytical datasets are generated:
 	•	artist name mappings
@@ -207,7 +207,7 @@ Derived analytical datasets are generated:
 These tables are optimized for analytics, not raw storage.
 
 
-5) Run-level parquet sanity checks
+### 5) Run-level parquet sanity checks
 
 Before promotion, filesystem-level validations are executed:
 	•	required datasets exist
@@ -219,7 +219,7 @@ If any check fails, the run is aborted.
 Nothing is published.
 
 
-6) Promote
+### 6) Promote
 
 If all validations pass:
 active -> _runs/<run_id>
@@ -230,7 +230,7 @@ active__prev_<timestamp>
 Rollback is a single filesystem operation.
 
 
-7) Post-promotion Trino sanity report
+### 7) Post-promotion Trino sanity report
 
 After promotion, Trino-based validations are executed on the active dataset:
 	•	row counts
@@ -246,7 +246,7 @@ This creates a permanent audit trail.
 
 =============================================================
 
-Why this design matters
+## Why this design matters
 
 ✔ Reproducibility
 
@@ -274,7 +274,7 @@ Trino and Hive can be rebuilt freely without data loss.
 
 ==========================================================
 
-What this project is not
+## What this project is not
 	•	not a toy ETL
 	•	not overwrite-based ingestion
 	•	not a one-off XML parser
@@ -284,7 +284,7 @@ It behaves like a real lakehouse pipeline.
 
 ===========================================================
 
-Legal note
+## Legal note
 
 Discogs data is subject to Discogs licensing terms.
 
