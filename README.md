@@ -138,6 +138,8 @@ hive-data/
         ├── label_release_counts_v1/
         ├── genre_style_xref/
         └── _reports/
+```
+
 
 All datasets are stored as Parquet only.
 
