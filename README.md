@@ -75,10 +75,11 @@ This repository owns the entire data lifecycle.
 ✅ Run-based architecture
 
 Every pipeline execution produces an immutable snapshot:
-
+```text
 hive-data/
 └── _runs/
     └── <run_id>/
+```
 
 Each run contains:
 	•	canonical typed datasets
