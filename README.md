@@ -123,6 +123,7 @@ This is the same principle used by:
 
 Physical storage (run snapshot)
 
+```text
 hive-data/
 └── _runs/
     └── <run_id>/
