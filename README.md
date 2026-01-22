@@ -8,7 +8,7 @@ The system is designed to behave like a real production-grade data platform, whi
 
 It prioritizes correctness, auditability, and safety over convenience.
 
-===================================================
+
 
 ## Overview
 
@@ -23,7 +23,7 @@ Publishing is performed by switching a single symbolic pointer.
 
 This mirrors how modern lakehouse systems operate in production.
 
-=====================================================
+
 
 ## Project structure
 
@@ -68,7 +68,7 @@ Responsibilities
 
 This repository owns the entire data lifecycle.
 
-=============================================================
+
 
 ## Core design principles
 
@@ -119,7 +119,7 @@ This is the same principle used by:
 	•	lakehouse systems
 	•	versioned datasets in production environments
 
-===================================================
+
 
 ## Data layout
 
@@ -148,7 +148,7 @@ All datasets are stored as Parquet only.
 No mutable formats.
 No partial overwrites.
 
-==================================================
+
 
 ## Logical access (Trino)
 
@@ -164,7 +164,7 @@ Only the active pointer changes after promotion.
 
 This decouples compute from storage completely.
 
-==================================================
+
 
 ## Pipeline lifecycle
 
@@ -249,7 +249,7 @@ _runs/<run_id>/_reports/trino_sanity_active_<timestamp>.csv
 
 This creates a permanent audit trail.
 
-=============================================================
+
 
 ## Why this design matters
 
@@ -277,7 +277,7 @@ Every run produces structured, timestamped validation reports.
 
 Trino and Hive can be rebuilt freely without data loss.
 
-==========================================================
+
 
 ## What this project is not
 	•	not a toy ETL
@@ -287,7 +287,7 @@ Trino and Hive can be rebuilt freely without data loss.
 
 It behaves like a real lakehouse pipeline.
 
-===========================================================
+
 
 ## Legal note
 
