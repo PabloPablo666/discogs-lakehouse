@@ -160,6 +160,7 @@ Trino external tables always point to:
 file:/data/hive-data/active/...
 
 As a result:
+
 	•	SQL never changes
 	•	dashboards never change
 	•	notebooks never change
@@ -195,6 +196,7 @@ The run ID is generated once and propagated to all tasks.
 	•	constant memory usage
 
 Typed canonical datasets are written:
+
 	•	artists
 	•	labels
 	•	masters
@@ -207,6 +209,7 @@ Each entity is processed independently.
 ### 4) Build warehouse
 
 Derived analytical datasets are generated:
+
 	•	artist name mappings
 	•	release–artist relationships
 	•	release–label relationships
@@ -299,6 +302,7 @@ It behaves like a real lakehouse pipeline.
 Discogs data is subject to Discogs licensing terms.
 
 This project:
+
 	•	does not distribute Discogs datasets
 	•	does not ship dumps
 	•	focuses exclusively on data engineering architecture and patterns
