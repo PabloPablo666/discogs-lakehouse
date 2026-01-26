@@ -222,6 +222,7 @@ These tables are optimized for analytics, not raw storage.
 ### 5) Run-level parquet sanity checks
 
 Before promotion, filesystem-level validations are executed:
+
 	•	required datasets exist
 	•	directories are not empty
 	•	basic structural integrity
