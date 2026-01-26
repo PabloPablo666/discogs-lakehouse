@@ -13,6 +13,7 @@ It prioritizes correctness, auditability, and safety over convenience.
 ## Overview
 
 The platform follows three fundamental rules:
+
 	•	Data is immutable
 	•	Every pipeline execution is versioned
 	•	Only validated data can be published
