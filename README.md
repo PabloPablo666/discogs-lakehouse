@@ -58,7 +58,8 @@ Discogs ingestion, transformation, validation, orchestration
 Repository:
 👉 https://github.com/PabloPablo666/discogs_tools_refactor
 
-Responsibilities
+Responsibilities:
+
 	•	Download Discogs dumps
 	•	Stream-parse large XML files
 	•	Write typed Parquet datasets
