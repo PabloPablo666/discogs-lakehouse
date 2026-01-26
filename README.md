@@ -281,7 +281,7 @@ Trino and Hive can be rebuilt freely without data loss.
 
 
 ## What this project is not
-	•	not a toy ETL
+	•	not an ETL
 	•	not overwrite-based ingestion
 	•	not a one-off XML parser
 	•	not “just some Parquet files”
