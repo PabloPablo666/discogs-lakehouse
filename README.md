@@ -238,6 +238,7 @@ Rollback is a single filesystem operation.
 ### 7) Post-promotion Trino sanity report
 
 After promotion, Trino-based validations are executed on the active dataset:
+
 	•	row counts
 	•	null ratios
 	•	orphan foreign keys
