@@ -104,6 +104,7 @@ hive-data/active -> _runs/2026-01__20260117_192144
 Publishing consists of switching this pointer atomically.
 
 Benefits:
+
 	•	zero-downtime publishing
 	•	instant rollback
 	•	stable table paths in Trino
@@ -117,6 +118,7 @@ Data never changes after creation.
 Only the pointer moves.
 
 This is the same principle used by:
+
 	•	data warehouses
 	•	lakehouse systems
 	•	versioned datasets in production environments
